@@ -1,3 +1,2 @@
 # ToDoList
-ToDoList
-Asp.Net Mvc 5 with AngularJs
+# Asp.Net MVC 5 with AngularJS
