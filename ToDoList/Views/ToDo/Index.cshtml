@@ -1,0 +1,147 @@
+﻿<html>
+<head>
+    <title>Todo List</title>
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.2/angular.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/2.5.0/ui-bootstrap-tpls.min.js"></script>
+    
+</head>
+<body class="container" ng-app="todoApp">
+<div>
+    <br />
+</div>
+<div ng-init="init()" class="col-md-12" ng-controller="todoCtrl">
+    <script type="text/ng-template" id="alert.html">
+        <div ng-transclude></div>
+    </script>
+    <div uib-alert ng-repeat="alert in alerts" ng-class="'alert-' + alert.type" close="closeAlert($index)"  dismiss-on-timeout="5000">{{alert.msg}}</div>
+
+    <div class="input-group">
+        <input type="text" ng-model="NewTodoText" class="form-control" placeholder="Todo ">
+        <span class="input-group-btn">
+            <button class="btn btn-default" type="button" ng-click="Add()">Add Todo</button>
+        </span>
+    </div>
+    <h4>Todo List</h4>
+    <div class="list-group">
+        <a href="javascript:;" class="list-group-item" ng-repeat="todo in List">
+            <div class="input-group">
+                <span class="input-group-addon" id="basic-addon1" ng-click="Delete(todo,$index)"><i class="fa fa-times"></i></span>
+                <input ng-model="todo.Text" class="form-control"/>
+                <span class="input-group-addon" id="basic-addon1" ng-click="Update(todo)"><span ng-if="todo.ModifiedDate" ng-bind="todo.ModifiedDate  | mydate | date: 'yyyy-MM-dd HH:mm'"></span>&nbsp;<i class="fa fa-save"></i></span>
+            </div>
+
+        </a>
+    </div>
+</div>
+<script>
+    var pageList = {
+        list: "@Url.Action("List","ToDo")",
+        add: "@Url.Action("Add","ToDo")",
+        delete: "@Url.Action("Delete","ToDo")",
+        update: "@Url.Action("Update","ToDo")"
+    }
+    angular.module("todoApp", ['ui.bootstrap'])
+        .filter("mydate",
+            function() {
+                var re = /\/Date\(([0-9]*)\)\//;
+                return function(x) {
+                    var m = x.match(re);
+                    if (m) return new Date(parseInt(m[1]));
+                    else return null;
+                };
+            })
+        .controller("todoCtrl",
+            function($scope, $http) {
+                $scope.List = [];
+                $scope.NewTodoText = "";
+
+                //Update
+                $scope.Update = function(todo) {
+                    $http.post(pageList.update,
+                    {
+                        Id: todo.Guid,
+                        Text: todo.Text
+
+                    }).then(function(res) {
+                        var jsonResult = res.data;
+                        if (jsonResult.IsSuccess) {
+                            todo.ModifiedDate = jsonResult.Data.ModifiedDate;
+                            $scope.addAlert('info', jsonResult.Message);
+                        } else {
+                            $scope.addAlert('danger', jsonResult.Message);
+                        }
+                    });
+                };
+
+                //Add
+                $scope.Add = function() {
+                    $http.post(pageList.add,
+                    {
+                        Text: $scope.NewTodoText
+
+                    }).then(function(res) {
+                        var jsonResult = res.data;
+                        if (jsonResult.IsSuccess) {
+                            $scope.List.push(jsonResult.Data);
+                            $scope.NewTodoText = "";
+                            $scope.addAlert('success', jsonResult.Message);
+                        } else {
+                            $scope.addAlert('danger', jsonResult.Message);
+                        }
+                    });
+                }
+
+                //Delete
+                $scope.Delete = function(todo, i) {
+                    $http.post(pageList.delete,
+                    {
+                        Id: todo.Guid
+
+                    }).then(function(res) {
+                        var jsonResult = res.data;
+                        if (jsonResult.IsSuccess) {
+                            $scope.List.splice(i, 1);
+                            $scope.addAlert('warning', jsonResult.Message);
+                        } else {
+                            $scope.addAlert('danger', jsonResult.Message);
+                        }
+                    });
+                }
+
+                //Init
+                $scope.init = function() {
+                    $http.get(pageList.list, {}).then(function(res) {
+                        var jsonResult = res.data;
+                        if (jsonResult.IsSuccess) {
+                            $scope.List = res.data;
+                        } else {
+                            $scope.addAlert('danger', jsonResult.Message);
+                        }
+
+                        
+                    });
+                }
+
+                //Alert
+                $scope.alerts = [];
+
+                $scope.addAlert = function (type, msg) {
+                    $scope.alerts.push({ type:type ,msg: msg });
+                };
+
+                $scope.closeAlert = function (index) {
+                    $scope.alerts.splice(index, 1);
+                };
+
+            });
+
+            
+    </script>
+
+</body>
+</html>
