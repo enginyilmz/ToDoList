@@ -63,6 +63,9 @@ namespace ToDoList.Controllers
 
         public JsonResult Archive()
         {
+            if(!ToDos.Any(_ => _.Overline))
+                return JsonError("No Records Select!");
+
             var todos = ToDos.Where(_ => _.Overline == false);
             ToDos = new List<ToDo>();
             ToDos = todos.ToList();
