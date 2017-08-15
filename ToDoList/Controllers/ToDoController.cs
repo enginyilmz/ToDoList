@@ -29,13 +29,14 @@ namespace ToDoList.Controllers
             return JsonSuccess(newTodo, "The new task has been successfully added.");
         }
 
-        public JsonResult Update(Guid? Id, string Text)
+        public JsonResult Update(Guid? Id, string Text, dynamic overline)
         {
             var todo = ToDos.SingleOrDefault(_ => _.Guid == Id);
             if (todo != null)
             {
                 todo.Text = Text;
                 todo.ModifiedDate=DateTime.Now;
+                todo.Overline = (bool) overline;
             }
             else
             {
@@ -58,6 +59,14 @@ namespace ToDoList.Controllers
             }
 
             return JsonSuccess(todo, "Task is deleted.");
+        }
+
+        public JsonResult Archive()
+        {
+            var todos = ToDos.Where(_ => _.Overline == false);
+            ToDos = new List<ToDo>();
+            ToDos = todos.ToList();
+            return JsonSuccess(ToDos, "Tasks are archived.");
         }
 
         public JsonResult JsonSuccess(dynamic data, string message="")
